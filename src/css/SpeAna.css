@@ -1,0 +1,259 @@
+/* Lv.0 画面全体をフル表示にする */
+body {
+  padding:0px;
+  border:0px;
+  margin:0px;
+}
+
+/* Lv.1 ローカルファイルのD&D対応領域(画面全体を対象にする) */
+#idDropDiv {
+  position: absolute;
+  left:		0px;
+  top:		0px;
+  right:	0px;
+  bottom:	0px;
+  border-width: 0px;
+  background-color:#888;
+  overflow:	hidden;
+
+  display:box;
+  display:-moz-box;
+  display:-webkit-box;
+  display:-o-box;
+  display:-ms-box;
+  orient:horizontal;
+  -moz-box-orient:horizontal;
+  -webkit-box-orient:horizontal;
+  -o-box-orient:horizontal;
+  -ms-box-orient:horizontal;
+  /*
+  display: inline-block;
+  width:auto;
+  */
+}
+
+/* Lv.2 設定ペイン(左端) 横方向にリサイズ可 */
+#idConfDiv {
+/*  display: inline-block;*/
+  width:200px; 
+  height:100%;
+  background-color:#555;
+  resize:	horizontal;
+  overflow:	auto;
+  border-width: 0px;
+  z-index: 20;
+  min-width: 220px;
+}
+
+/* Lv.2 描画ペイン(右端) */
+#idViewDiv {
+  height:100%;
+  background-color:#666;
+  overflow:	hidden;
+  border-width: 0px;
+  z-index: 10;
+}
+
+/* Lv.3 設定ペイン内の下位ブロック用 (設定ペイン内に上から順に積む) */
+div.subconf{
+  position: static;
+  background-color:#eee;
+  border-style: outset;
+  border-color: #aaa;
+  border-width: 1px;
+  border-radius:6px;
+  margin:1px;
+  text-align:center;
+}
+
+/* Lv.3 FFT波形キャンバス(上端) 縦方向にリサイズ可 */
+#idWaveDiv {
+  margin:1px;
+  background-color:#555;
+  min-height: 100px; /*効かない?*/
+  height: 200px;
+  overflow:	hidden;
+  resize:	vertical;
+  border-style:inset;
+  border-width: 1px;
+  border-color: #888;
+}
+
+#idWaveCanvas {
+  cursor:crosshair;
+}
+
+/* Lv.3 FFT Water Fall + Raw signalのフローキャンバス用(下端) */
+#idFlowDiv {
+  margin:1px;
+  background-color:#888;
+  overflow:	hidden;
+  border-style: inset;
+  border-width: 1px;
+  border-color: #888;
+}
+
+#idFlowCanvas {
+  cursor:crosshair;
+}
+
+/* Lv.4 subconfのタイトル領域 */
+div.subconfTitle{
+  color:#fff;
+  background-color:#655;
+  border-width: 0px;
+  border-radius:5px;
+  font-weight: bold;
+  text-shadow: -1px -1px 1px #100, 1px 1px 1px #cbb;
+  padding: 2px;
+  cursor: pointer;
+}
+/* Lv.4 subconfの内容 */
+div.subconfitem {
+  display: inline-block;
+  width:auto;
+  text-align:center;
+/*  background-color:#ccb; /* ZZZ */
+}
+/* Lv.4 subconfの内容 */
+div.subconfitemHide {
+  display: none;
+  width:auto;
+  text-align:center;
+/*  background-color:#ccb; /* ZZZ */
+}
+/* Lv.5 subconfの内容 */
+div.leftitem {
+  text-align:left;
+}
+
+/* Lv.5 ファイル選択ボタン。横幅が大きいので非表示にしてボタンに置き換える */
+#idSrcLocalFile {
+/*  display: none; Operaはnoneにするとclickが動作しない! */
+  position: absolute; /* フォーカス対象にはなるが座標指定で隠す。 */
+  left:		0px;
+  bottom:	-100px;
+}
+
+/* Lv.5 設定内のテーブル配置 */
+table.subtable{
+  table-layout: fixed;
+/*  width:100%;*/
+/*  text-align:right;*/
+}
+
+/* Lv.5 レンジ調整 */
+input.subrange{
+  width:6em;
+}
+
+/* Lv.5 ソース名: スクロール対応のため input-textを使う */
+#idInputNm{
+  font: medium "x"; /* デフォルトフォントに戻す */
+  border: 1px solid #eed;
+  background-color:#eee;
+  width:5em;
+  resize:none;
+  cursor:text;
+}
+
+.rangeValue {
+  text-align:right;
+  width:2em;
+}
+
+/* Lv.5 FFT configのプルダウンメニューを同じ幅に揃える */
+select.subsel{
+  width:7em;
+}
+
+/* Lv.5 色選択プルダウン (Canvasサイズと合わせること!) */
+#idColorSel {
+  width: 100%;
+}
+
+/* Lv.5 色選択キャンバス */
+#idColorCanvas {
+  border-style: solid;
+  border-width: 1px;
+  cursor:crosshair;
+}
+
+/* Lv.3 アプリ情報 */
+#idAppInfo {
+  text-align:center;
+  color:#ffe;
+  text-shadow: -1px -1px 1px #bbb, 0px -1px 1px #aaa, -1px -0px 1px #aaa, 1px 0px 1px #111, 0px 1px 1px #111, 1px 1px 1px #000;
+}
+
+/*****************************************************************************/
+/* Lv.1 ダイアログ */
+div.inlineDialog {
+  padding:1px;
+  background-color: #eed;
+  top:  40%;
+  left: 40%;
+  border: 1px outset #aaa;
+  position: absolute;
+  z-index: 100;
+  display: none;
+}
+
+/* Lv.2 ダイアログタイトル */
+div.dialogTitle{
+  color: #fff;
+  background-color:#555;
+  border-radius:2px;
+  font-weight: bold;
+  text-align:center;
+}
+/* Lv.2 ダイアログサンプルリンク */
+div.sampleData{
+  text-align:center;
+  text-decoration:underline;
+  cursor: pointer;
+}
+/* Lv.2 ダイアログボタン */
+div.dialogButton {
+  text-align:center;
+}
+
+/* table check */
+td, th {
+  border: 0px;
+  margin:0px;
+  padding: 0px;
+}
+
+/*****************************************************************************/
+/* Lv.1 ツールチップ */
+#idTipDiv {
+  position: absolute;
+  z-index: 101;
+  display: none;
+  background-color:#ffd;
+  border: 1px outset #665;
+  border-radius:5px;
+  padding:1px;
+}
+
+/*****************************************************************************/
+/* Lv.1 SetCapture用Div */
+#idCaptureDiv {
+  position: absolute;
+  z-index: 102;
+  display: none;
+  left:		0px;
+  top:		0px;
+  right:	0px;
+  bottom:	0px;
+}
+
+/*****************************************************************************/
+/* Lv.1 オーバレーデバッグ用Div */
+#idDebugDiv {
+  position: absolute;
+  right:0;
+  color:#fff;
+  display:none;
+}

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title id="idTitle">SpeAnaWeb: Spectrum Analyzer for WEB version 0.2 - JJY by rinos4u</title>
+<link rel="stylesheet" type="text/css" href="css/SpeAna.css" />
+<script type="text/javascript" src="script/fft.js"        ></script> 
+<script type="text/javascript" src="script/util.js"       ></script> 
+<script type="text/javascript" src="script/WaveDecoder.js"></script>
+<script type="text/javascript" src="script/plugin_JJY.js" ></script>
+<script type="text/javascript" src="script/SpeAna.js"     ></script>
+</head>
+
+<body>
+<!-- Drag and Drop area *****************************************************-->
+<div id="idDropDiv">
+
+ <!-- Configure panel *******************************************************-->
+ <div id="idConfDiv">
+  <!-- Input source box -->
+  <div class="subconf">
+   <div id="idSelinputTitle" class="subconfTitle">- Input Source -</div>
+   <div id="idSelinputItem"  class="subconfitem">
+    <button id="idSrcMic"   title="Connect to Mic stream server"                       >Mic.</button>
+    <button id="idSrcLocal" title="Open an audio file (Ogg, MP3, Wav) on your computer">Local file</button>
+    <button id="idSrcHttp"  title="Open a audio file from WEB"                         >Web</button>
+    <input  id="idSrcLocalFile" type="file" accept="audio/*">
+    <table id="idSrcTable" title="Please drop a local audio file here!">
+     <tr><td>Source:    </td><td><input id="idInputNm" value="No data" readonly></td></tr>
+     <tr><td>Channel:   </td><td><span  id="idInputCh">--ch     </span></td></tr>
+     <tr><td>Sampling rate:</td><td><span  id="idInputSr">--Hz     </span></td></tr>
+     <tr><td>Data size:</td><td><span  id="idInputBs">--bit    </span></td></tr>
+     <tr><td>Duration:  </td><td><span  id="idInputDr">--:--.---</span></td></tr>
+    </table>
+   </div>
+  </div>
+
+  <!-- Playback control box -->
+  <div class="subconf">
+   <div id="idPlayTitle" class="subconfTitle">- Playback control -</div>
+   <div id="idPlayItem"  class="subconfitem">
+    <audio id="idAudio"></audio>
+    <audio id="idTone" src="sound/tone.wav"></audio> <!-- for JJY -->
+    <!--video id="idVideo" autoplay></video-->
+    <button id="idStart" disabled>start</button>
+    <button id="idStop"  disabled>stop</button>
+    <button id="idPause" disabled>pause</button>
+    
+    <table class="subtable">
+     <tr title="Playback volume">
+      <td>Volume:</td>
+      <td><input id="idVolume" type="range" min="0" max="20" step="1" value="0" class="subrange"></td>
+      <td><div id="idVolumeText" class="rangeValue"></div></td>
+     </tr>
+     <tr title="Playback speed">
+      <td>Speed:</td>
+      <td><input id="idPBSRange" type="range" min="1" max="19" step="1" value="10" class="subrange"></td>
+      <td><div id="idPBSText" class="rangeValue"></div></td>
+     </tr>
+    </table>
+    <div class="leftitem">
+    <input id="idRepeat" type="checkbox">Audo repeat<br>
+    </div>
+   </div>
+  </div>
+
+  <!-- FFT flow control box -->
+  <div class="subconf">
+   <div id="idFlowConfTitle" class="subconfTitle">- Flow config -</div>
+   <div id="idFlowItem"      class="subconfitem">
+    <input id="idFlowNone" type="radio" name="flowMode" value="0" title="Don't show the flow"        >Off
+    <input id="idFlowRoll" type="radio" name="flowMode" value="1" title="Scroll down"         checked>Scroll
+    <input id="idFlowOver" type="radio" name="flowMode" value="2" title="Rewind from top"            >Rewind
+    <table>
+     <tr title="Flow speed ratio">
+      <td>Flow:</td>
+      <td><input id="idFDSRange" type="range" min="-19" max="19" step="1" value="0" class="subrange"></td>
+      <td><div   id="idFDSText" class="rangeValue"></div></td>
+     </tr>
+    </table>
+
+    <div class="leftitem">
+    <input id="idTimeGrid" type="checkbox" checked>Show time grid<br>
+    </div>
+   </div>
+  </div>
+
+  <!-- Frequence range box. Step=0.05, because 44.100/2 can be divided by 0.05 -->
+  <div class="subconf">
+   <div id="idFreqConfTitle" class="subconfTitle">- Frequency config -</div>
+   <div id="idFreqConfItem"  class="subconfitem">
+    Scale:
+    <input id="idFreqLinear" type="radio" name="freqMode" value="0" checked>Linear
+    <input id="idFreqLog"    type="radio" name="freqMode" value="1"        >Log<br>
+    <div style="float:left;">
+    <input id="idFreqMin"    type="number" value=" 0.000" min="0.000" max="48.000" step="0.05" style="width:5em" title="Minimum range of freq"> -
+    <input id="idFreqMax"    type="number" value="48.000" min="0.000" max="48.000" step="0.05" style="width:5em" title="Maximum range of freq"> kHz
+    </div>
+    <div class="leftitem">
+    <input id="idFreqSlide"  type="checkbox">Keep width of range<br>
+    <input id="idFreqGrid"   type="checkbox" checked>Show frequency grid<br>
+    <input id="idFreqFull"   type="checkbox" checked>Show full range<br>
+    </div>
+   </div>
+  </div>
+
+  <!-- Amplitude range box. Step is changed by Linear/dB-mode -->
+  <div class="subconf">
+   <div id="idAmplConfTitle" class="subconfTitle">- Amplitude config -</div>
+   <div id="idAmplItem"      class="subconfitem">
+    Level:
+    <input id="idAmplLinear" type="radio" name="amplMode" value="0">Linear
+    <input id="idAmpldB"     type="radio" name="amplMode" value="1" checked>dB<br>
+    <input id="idAmplMin"    type="number" value="-120.0" min="-120.0" max="0.0" step="1" style="width:5em" title="Minimum range of amp"> -
+    <input id="idAmplMax"    type="number" value="   0.0" min="-120.0" max="0.0" step="1" style="width:5em" title="Maximum range of amp"><span id="idAmplUnit"> dB</span>
+    <div class="leftitem">
+     <input id="idAmplSlide" type="checkbox">Keep width of range<br>
+     <input id="idAmplGrid"  type="checkbox" checked>Show amplitude grid<br>
+    </div>
+   </div>
+  </div>
+
+  <!-- Color paletter selector box -->
+  <div id="idColorDiv" class="subconf">
+   <div id="idColorTitle" class="subconfTitle">- Amplitude  -</div>
+   <div id="idColorItem" class="subconfitem">
+    <select id="idColorSel">
+    <option value="spectrum"        >Color spectrum   </option>
+    <option value="grayscale"       >Gray scale       </option>
+    <option value="sunset"          >Sunset           </option>
+    <option value="highhue" selected>High Hue-Value   </option>
+    <option value="temperature"     >Color temperature</option>
+    </select><br>
+    <!-- Palette canvas (width will be arranged automatically) -->
+    <canvas id="idColorCanvas" width="1" height="30"></canvas>
+    <div class="leftitem">
+    <input id="idPalInvert" type="checkbox">Invert palette<br>
+    </div>
+   </div>
+  </div>
+
+  <!-- Graph box -->
+  <div class="subconf">
+   <div id="idGraphConfTitle" class="subconfTitle">- Graph option -</div>
+   <div id="idGraphConfItem" class="subconfitem">
+    <div class="leftitem">
+     <table>
+      <tr><td><input id="idLerp"     type="checkbox" checked>Linear interpolation</td><td></td></tr>
+      <tr><td><input id="idCurNoOL"  type="checkbox"        >Non-overlapped graph<!-- of spectrum graph--></td><td></td></tr>
+      <tr><td><input id="idWaveMax"  type="checkbox" checked>Show Max. graph</td><td style="color:#fc8;background-color:#733;">&nbsp;-&nbsp;</td></tr>
+      <tr><td><input id="idWaveAvg"  type="checkbox" checked>Show Avg. graph</td><td style="color:#8cf;background-color:#337;">&nbsp;-&nbsp;</td></tr>
+      <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<button id="idClear">Reset Max/Avg</button></td><td></td></tr>
+      <tr><td><input id="idWavePeak" type="checkbox" checked>Show peak value</td><td></td></tr>
+     </table>
+     <table class="subtable">
+      <tr title="Update period of peak">
+       <td>&nbsp;&nbsp;&nbsp;&nbsp;Period:</td>
+       <td><input id="idPeakPeriod" type="range" min="0" max="1000" step="100" value="0" class="subrange"></td>
+       <td><div id="idPeakPeriodText" class="rangeValue"></div></td>
+      </tr>
+     </table>
+    </div>
+   </div>
+  </div>
+
+  <!-- FFT box -->
+  <div class="subconf">
+   <div id="idFFTConfTitle" class="subconfTitle">- FFT config -</div>
+   <div id="idFFTItem" class="subconfitem">
+    <table class="subtable">
+     <tr>
+      <td>Block size:</td>
+      <td>
+       <select id="idFFTSel" class="subsel" title="It's effects resolution of time & freq.">
+       <option value="512"          > 512 bytes</option>
+       <option value="1024"         > 1KB      </option>
+       <option value="2048"         > 2KB      </option>
+       <option value="4096"         > 4KB      </option>
+       <option value="8192" selected> 8KB      </option>
+       <option value="16384"        >16KB     </option>
+       <option value="32768"        >32KB      </option>
+       </select>
+      </td>
+     </tr>
+     <tr>
+      <td>Channel:</td>
+      <td>
+       <select id="idFFTCh" class="subsel" title="Please select the target channel FFT.">
+       <option value="0" id="idChAll" selected>Merged</option>
+       <option value="1" id="idCh1"           >1ch   </option>
+       <option value="2" id="idCh2"           >2ch   </option>
+       <option value="3" id="idCh3"           >3ch   </option>
+       <option value="4" id="idCh4"           >4ch   </option>
+       <option value="5" id="idCh5"           >5ch   </option>
+       <option value="6" id="idCh6"           >6ch   </option>
+       </select>
+      </td>
+     </tr>
+     <tr>
+      <td>Window:</td>
+      <td>
+       <select id="idFFTWindow" class="subsel" title="Please select the FFT windows function.">
+       <option value="rect"         >Rectangular(fast)</option>
+       <option value="hann" selected>Hann             </option>
+       <option value="hamming"      >Hamming          </option>
+       <option value="blackman"     >Blackman         </option>
+       <option value="bartlett"     >Bartlett         </option>
+       <option value="sine"         >Sine             </option>
+       </select>
+      </td>
+     </tr>
+    </table>
+    <table>
+     <tr title="Overlap ratio (Note: Big value requres more big CPU performance!)">
+      <td>Overlap:</td>
+      <td><input id="idOverlap" type="range" min="0" max="6" step="1" value="4" class="subrange"></td>
+      <td><div id="idOverlapText" class="rangeValue"></div></td>
+     </tr>
+    </table>
+   </div>	
+  </div>	
+
+  <!-- Plugin control box -->
+  <div class="subconf">
+   <div id="idPluginConfTitle" class="subconfTitle">- Plugin config -</div>
+   <div id="idPluginItem"      class="subconfitem">
+    <div class="leftitem">
+     <table class="subtable">
+      <tr title="No plugin">
+       <td><input id="idPluginNone" type="radio" name="PluginMode" value="None"      title="No pluaing" checked>None</td>
+      </tr>
+      <tr title="JJY plugin">
+       <td><input id="idPluginJJY"  type="radio" name="PluginMode" value="PluginJJY" title="JJY decoder"       >JJY Plugin</td>
+      </tr>
+     </table>
+    </div>
+   </div>
+  </div>
+
+  <!-- Debug box -->
+  <div id="idDebugConfDiv" class="subconf">
+   <div id="idDebugConfTitle" class="subconfTitle">- Debug -</div>
+   <div id="idDebugConfItem" class="subconfitemHide">
+    <div class="leftitem">
+     <input id="idOLDebug"  type="checkbox"        >DebugView<br>
+     <input id="idFpsDebug" type="checkbox" checked>Show FPS<br>
+    </div>
+   </div>
+  </div>
+  
+  <!-- version information -->
+  <div id="idAppInfo">
+  <hr>
+   SpeAnaWeb Version 1.0<br>
+   June 2013, by rinos4u<br>
+   (OSS Spectrum Analyzer)
+  <hr>
+  </div>
+ </div>
+
+ <!-- FFT View panel ********************************************************-->
+ <div id="idViewDiv">
+
+  <!-- FFT wave canvas: (resizable)-->
+  <div id="idWaveDiv">
+   <canvas id="idWaveCanvas" width="1" height="1"></canvas>
+  </div>
+  <!-- FFT Water Fall & Raw signal canvs (resizable)-->
+  <div id="idFlowDiv">
+   <canvas id="idFlowCanvas" width="1" height="1"></canvas>
+  </div>
+ </div>
+</div>
+
+<!-- URL input dialog for sound file ****************************************-->
+<div id="idUrlDialog" class="inlineDialog">
+ <div class="dialogTitle">Download audio file</div>
+ <p>
+ Please input URL of audio file (Ogg, MP3, Wav)<br>
+ <p>
+ <span id="idDownloadNote"></span>
+ <div class="dialogButton">
+ URL: 
+ <input id="idSrcHttpUrl" type="url" name="inputURL" value="" placeholder="URL for audio file">
+ <button id="idDownloadStart">Open</button><br>
+ <div id="idProgressBar"></div>
+ </div>
+ <p>
+ You can use the sample data, below; 
+ <!--div class="sampleData" onclick="idSrcHttpUrl.value='sound/caribbean_sea.mp3'">caribbean_sea.mp3</div-->
+ <div class="sampleData" onclick="idSrcHttpUrl.value='sound/jinglebells.mp3'">jinglebells.mp3</div>
+ <div class="sampleData" onclick="idSrcHttpUrl.value='sound/LSweep_R10K.wav'"   >LSweep_R10K.wav</div>
+ <p>
+ (Note: Some kind of MP3 can't decode...)
+ 
+ <!-- sample sound file was from (http://www.otonomori.info/) -->
+ 
+ <hr>
+ <div class="dialogButton">
+ <button id="idCloseUrl">Cancel</button>
+ </div>
+</div>
+
+
+<!-- MIC Serverdialog for sound file ****************************************-->
+<div id="idMicDialog" class="inlineDialog">
+ <div class="dialogTitle">MIC server</div>
+ <p>
+ Please set the MIC server settings<br>
+ <p>
+ <span id="idMicNote"></span>
+ <div class="dialogButton">
+  <div class="leftitem">
+   <table class="subtable">
+    <tr>
+     <td>URL:</td>
+     <td>
+      <input id="idSrcMicUrl" type="url" name="inputURL" value="ws://localhost:8888/" placeholder="MIC Server address" list="urlCombo"><br>
+      <datalist id="urlCombo">
+       <option value="ws://localhost:8888/"    >Local Host</option>
+       <option value="ws://192.168.0.100:8888/">Remote MIC</option>
+      </datalist>
+     </td>
+    </tr>
+    <tr>
+     <td>Device:</td>
+     <td>
+      <select id="idMicDev" class="subsel" title="Select input device.">
+      <option value="-1" selected>MAPPER</option>
+      <option value= "0"         >Device#0</option>
+      <option value= "1"         >Device#1</option>
+      <option value= "2"         >Device#2</option>
+      </select><br>
+     </td>
+    </tr>
+    <tr>
+     <td>Channel:</td>
+     <td>
+      <select id="idMicCh" class="subsel" title="Select channel number.">
+      <option value="1" selected>1ch</option>
+      <option value="2"         >2ch</option>
+      </select><br>
+     </td>
+    </tr>
+    <tr>
+     <td>Data size</td>
+     <td>
+      <select id="idMicBit" class="subsel" title="Select bit size.">
+      <option value="8"          >8bit </option>
+      <option value="16"         >16bit</option>
+      <option value="24" selected>24bit</option>
+      </select><br>
+     </td>
+    </tr>
+    <tr>
+     <td>Sampling rate:</td>
+     <td>
+      <select id="idMicSr" class="subsel" title="Select sampling rate.">
+      <option value="8000"          >8kHz </option>
+      <option value="16000"         >16kHz</option>
+      <option value="24000"         >24kHz</option>
+      <option value="48000"         >48KHz</option>
+      <option value="96000" selected>96KHz</option>
+      </select><br>
+     </td>
+    </tr>
+   </table>
+  </div>
+ </div>
+ <hr>
+ <div class="dialogButton">
+ <button id="idMicStart">Connect</button>
+ <button id="idMicCancel">Cancel</button>
+ </div>
+</div>
+
+
+<!-- Mic server error dialog ************************************************-->
+<div id="idMicErrorDialog" class="inlineDialog">
+ <div class="dialogTitle">MIC server error</div>
+ <p>
+ <span id="idMicErrMsg"></span>
+ <p>
+ <hr>
+ <div class="dialogButton">
+ <button id="idCloseErr">Close</button>
+ </div>
+ <p>
+</div>
+
+<!-- Decode progress dialog *************************************************-->
+<div id="idDecodeDialog" class="inlineDialog">
+ <div class="dialogTitle">Decode audio file</div>
+ <p>
+ Decoding the audio file. Please wait...
+ <p>
+ <hr>
+ <div class="dialogButton">
+ <button id="idClosePrg">Close</button>
+ </div>
+ <p>
+</div>
+
+<!-- Tooltips ***************************************************************-->
+<div id="idTipDiv"></div>
+
+<!-- Transparent div for mouse capture **************************************-->
+<div id="idCaptureDiv"></div>
+
+<!-- On screen debug view ***************************************************-->
+<div id="idDebugDiv">
+DebugView
+</div>
+
+</body>
+</html>
